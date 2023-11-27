@@ -172,3 +172,170 @@ int SubProcessHandler(int *leftFd)
 	exit(0);
 }
 ```
+## find
+```c
+#include "kernel/types.h"
+#include "kernel/stat.h"
+#include "kernel/fs.h"
+#include "user/user.h"
+
+/*
+
+伪代码
+find（path， file）
+    if (path)
+    {
+        1.file 直接退出
+        2.path
+        {
+            遍历每个目录项
+            {
+                1.file 判断是不是想要的文件
+                2.path 继续递归
+            }
+        }  
+    }
+*/
+
+  
+
+void find(char *pathName, char *fileName)
+{
+    char buf[512]; //用来缓存路径名
+    char *p;
+    int fd, fd1;
+    struct dirent de; //用来保存目录信息
+    struct stat st, st1; //用来记录文件信息
+  
+    if ((fd = open(pathName, 0)) < 0)
+    {//如果打开路径失败
+        fprintf(2, "path error.\n");
+        exit(1);
+    }
+  
+
+    if (fstat(fd, &st) < 0)
+    {//如果文件信息录入错误,有可能是无效文件
+        fprintf(2, "stat error.\n");
+        close(fd);
+        exit(1);
+    }
+ 
+
+    switch (st.type)
+    {
+        case T_FILE://如果指向了文件
+            fprintf(2, "path error.\n");
+            exit(1);
+        case T_DIR:
+            strcpy(buf, pathName); //加载路径名称
+            p = buf + strlen(buf); //定位到当前路径末尾；
+            *p++ = '/'; //在末尾加上文件切换符号
+
+            while (read(fd, &de, sizeof(de)) == sizeof(de))
+            {//遍历搜索目录
+                if (de.inum == 0)
+                {//如果读到了无效文件，继续往下遍历
+                    continue;
+                }
+
+                if (!strcmp(de.name, ".") || !strcmp(de.name, ".."))
+                {//如果是. 或者 ..则忽略
+                    continue;
+                }
+
+                memmove(p, de.name, DIRSIZ); //将遍历到的文件名加上去
+                if ((fd1 = open(buf, 0)) >= 0)
+                {//打开新的文件
+                    if (fstat(fd1, &st1) >= 0)
+                    {//获取新的文件信息
+                        switch (st1.type)
+                        {
+                            case T_FILE:
+                                if (!strcmp(de.name, fileName))
+                                {
+                                    printf("%s\n", buf);//如果文件名一致输出
+                                } 
+
+                                close(fd1);
+                                break;
+                            case T_DIR:
+                                close(fd1);
+                                find(buf, fileName);//如果还是目录递归
+                                break;
+                            default:
+                                close(fd1);
+                        }
+                    }
+                }
+            }
+    }
+    close(fd);
+}
+
+int main(int argc, char *argv[])
+{
+    if (argc != 3)
+    {
+        fprintf(2, "Usage: find path file\n");
+    }
+
+    find(argv[1], argv[2]); 
+    exit(0);
+}
+```
+## xargs
+```c
+#include "kernel/types.h"
+#include "kernel/stat.h"
+#include "user/user.h"
+#include "kernel/param.h"
+  
+//将标准输入中的数据当作参数执行
+int main(int argc, char *argv[])
+{
+    char stdIn[512];
+    int size = read(0, stdIn, sizeof(stdIn));
+    int i = 0, j = 0;
+    int line = 0;
+
+    for (int k = 0;k < size;k++)
+    {
+        if (stdIn[k] == '\n')
+        {
+            line++; //统计标准输入中的行数
+        }
+    }  
+
+    char output[line][64];
+    for (int k = 0;k < size;k++)
+    {//将每行分开存储
+        output[i][j++] = stdIn[k];
+        if (stdIn[k] == '\n')
+        {
+            output[i][j-1] = '\0';
+            i++;
+            j = 0;
+        }
+    }  
+
+    char *arguments[MAXARG]; //定义数组暂存参数
+    for (j = 0;j < argc-1;j++)
+    {
+        arguments[j] = argv[j+1]; //先复制已有参数
+    }  
+
+    i = 0;
+    while (i < line)
+    {
+        arguments[j] = output[i++]; //把每行参数贴到命令最后面
+        if (fork() == 0)
+        {
+            exec(argv[1], arguments); //exec需要可执行文件名 和 参数数组
+            exit(0);
+        }
+        wait(0);//创建子进程执行每个命令
+    }
+    exit(0);
+}
+```

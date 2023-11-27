@@ -33,7 +33,7 @@
             "state": {
               "type": "markdown",
               "state": {
-                "file": "C&C++/CPP.md",
+                "file": "操作系统/MIT6.S081.md",
                 "mode": "source",
                 "source": false
               }
@@ -106,7 +106,7 @@
             "state": {
               "type": "backlink",
               "state": {
-                "file": "C&C++/CPP.md",
+                "file": "操作系统/MIT6.S081.md",
                 "collapseAll": false,
                 "extraContext": false,
                 "sortOrder": "alphabetical",
@@ -123,7 +123,7 @@
             "state": {
               "type": "outgoing-link",
               "state": {
-                "file": "C&C++/CPP.md",
+                "file": "操作系统/MIT6.S081.md",
                 "linksCollapsed": false,
                 "unlinkedCollapsed": true
               }
@@ -146,7 +146,7 @@
             "state": {
               "type": "outline",
               "state": {
-                "file": "C&C++/CPP.md"
+                "file": "操作系统/MIT6.S081.md"
               }
             }
           }
@@ -167,7 +167,7 @@
       "command-palette:打开命令面板": false
     }
   },
-  "active": "646e0ef2b07d910a",
+  "active": "86c1efb97a92ba1c",
   "lastOpenFiles": [
     "C&C++/C.md",
     "C&C++/CPP.md",
